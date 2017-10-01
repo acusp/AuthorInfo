@@ -2,8 +2,7 @@
 "  Author:          dantezhu - http://www.vimer.cn
 "  Email:           zny2008@gmail.com
 "  FileName:        authorinfo.vim
-"  Description:     
-"  Version:         1.5
+"  Description:
 "  LastChange:      2011-02-23 16:42:42
 "  History:         support bash's #!xxx
 "                   fix bug for NerdComment's <leader>
@@ -29,8 +28,26 @@ function! g:CheckFileType(type)
         return 0
     endif
 endfunction
+
+function s:AddHeader()
+    exe 'normal '.1.'G'
+    let line = getline('.')
+    let b:filetype = &ft
+    if line == ''
+        if b:filetype == 'sh'
+            call setline('.','#!/bin/bash')
+            normal o
+        elseif b:filetype == 'python'
+            call setline('.','#!/usr/bin/env python3')
+            normal o
+            call setline('.','# -*- coding: utf-8 -*-')
+            normal o
+        endif
+    endif
+endfunction
+
 function s:DetectFirstLine()
-    "跳转到指定区域的第一行，开始操作
+    " go to line: 1
     exe 'normal '.1.'G'
     let arrData = [
                 \['sh',['^#!.*$']],
@@ -55,7 +72,8 @@ function s:DetectFirstLine()
             break
         endif
         normal j
-        "到了最后一行了，所以直接o就可以了
+
+        "last line
         if oldNum == line('.')
             normal o
             return
@@ -64,6 +82,7 @@ function s:DetectFirstLine()
     endwhile
     normal O
 endfunction
+
 function s:BeforeTitle()
     let arrData = [['python',"'''"]]
     for [t,v] in arrData
@@ -74,6 +93,7 @@ function s:BeforeTitle()
         endif
     endfor
 endfunction
+
 function s:AfterTitle()
     let arrData = [['python',"'''"]]
     for [t,v] in arrData
@@ -85,10 +105,11 @@ function s:AfterTitle()
         endif
     endfor
 endfunction
+
 function s:AddTitle()
-    "检查开始插入作者信息的行
+    call s:AddHeader()
     call s:DetectFirstLine()
-    "判断是否支持多行注释
+    " if support Multi-line comment
     let hasMul = 0
     let preChar = ''
     let noTypeChar = ''
@@ -109,7 +130,6 @@ function s:AddTitle()
         endif
     endif
 
-    "在第一行之前做的事情
     call s:BeforeTitle()
 
     let firstLine = line('.')
@@ -124,18 +144,15 @@ function s:AddTitle()
     normal o
     call setline('.',noTypeChar.preChar.'        Email: '.g:vimrc_email)
     normal o
-    call setline('.',noTypeChar.preChar.'     HomePage: '.g:vimrc_homepage)
-    normal o
-    call setline('.',noTypeChar.preChar.'      Version: 0.0.1')
-    normal o
+    "call setline('.',noTypeChar.preChar.'     HomePage: '.g:vimrc_homepage)
+    "normal o
     call setline('.',noTypeChar.preChar.'   LastChange: '.strftime("%Y-%m-%d %H:%M:%S"))
     normal o
-    call setline('.',noTypeChar.preChar.'      History:')
-    normal o
+    "call setline('.',noTypeChar.preChar.'      History:')
+    "normal o
     call setline('.',noTypeChar.'=============================================================================')
     let lastLine = line('.')
 
-    "在最后一行之后做的事情
     call s:AfterTitle()
 
     if hasMul == 1
@@ -148,11 +165,12 @@ function s:AddTitle()
     startinsert!
     echohl WarningMsg | echo "Succ to add the copyright." | echohl None
 endf
+
 function s:TitleDet()
     silent! normal ms
     let updated = 0
     let n = 1
-    "默认为添加
+
     while n < 20
         let line = getline(n)
         if line =~ '^.*FileName:\S*.*$'
@@ -174,4 +192,5 @@ function s:TitleDet()
     endif
     call s:AddTitle()
 endfunction
+
 command! -nargs=0 AuthorInfoDetect :call s:TitleDet()
